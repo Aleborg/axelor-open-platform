@@ -285,7 +285,7 @@ ui.directive('uiViewPortlet', ['$compile', function($compile){
         '<div class="portlet-header navbar">'+
           '<div class="navbar-inner">'+
             '<div class="container-fluid">'+
-              '<span class="brand" ng-bind-html="title"></span>'+
+              '<span class="navbar-brand" ng-bind-html="title"></span>'+
               '<ul class="nav pull-right">'+
                 '<li class="portlet-pager" ng-show="showPager">'+
                   '<span class="portlet-pager-text">{{pagerText()}}</span>'+

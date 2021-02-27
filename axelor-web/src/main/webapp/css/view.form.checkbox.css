@@ -15,115 +15,116 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 .ibox {
-  display: inline-block;
+    display: inline-block;
     width: inherit;
-  margin: 0;
-  overflow: hidden;
+    margin: 0;
+    overflow: hidden;
 }
 
 .form-inline .ibox {
-  vertical-align: middle;
-  margin-bottom: 0;
+    vertical-align: middle;
+    margin-bottom: 0;
 }
 
 .ibox.readonly {
-  cursor: default;
-  opacity: 0.6;
+    cursor: default;
+    opacity: 0.6;
 }
 
 .ibox .box {
-  display: inline-block;
-  position: relative;
-  width: 20px;
-  height: 20px;
-  float: left;
-  outline: none;
+    display: inline-block;
+    position: relative;
+    width: 20px;
+    height: 20px;
+    float: left;
+    outline: none;
 }
 
 .ibox input {
-  opacity: 0 !important;
-  margin-left: -14px !important;
-  position: absolute;
+    opacity: 0 !important;
+    margin-left: -14px !important;
+    position: absolute;
 }
 
 .ibox .title {
-  margin-left: 8px;
+    margin-left: 8px;
 }
 
 .ibox .item-label {
-  color: #999;
+    color: #999;
 }
 
 .ibox .box:before,
 .ibox .box:after {
-  box-sizing: border-box;
+    box-sizing: border-box;
 }
 
 .ibox.round .box:before {
-  border-radius: 20px;
+    border-radius: 20px;
 }
 
 .ibox .box:before {
-  content: " ";
-  display: inline-block;
-  border: 1px solid #ccc;
-  height: 100%;
-  width: 100%;
-  transition: all .2s;
+    content: " ";
+    display: inline-block;
+    border: 1px solid #ccc;
+    height: 100%;
+    width: 100%;
+    transition: all .2s;
 }
 
-.ibox input:focus + .box:before {
-  border: 1px solid #0275d8;
+.ibox input:focus+.box:before {
+    border: 1px solid #0275d8;
 }
 
 .ibox:hover .box:before,
-.ibox:hover input:focus + .box:before {
-  border: 2px solid #0275d8;
+.ibox:hover input:focus+.box:before {
+    border: 2px solid #0275d8;
 }
 
-.ibox input:checked + .box:before {
-  border: 1px solid #0275d8;
-  background-color: #0275d8;
+.ibox input:checked+.box:before {
+    border: 1px solid #0275d8;
+    background-color: #0275d8;
 }
 
-.ibox input:checked + .box:after {
-  content: " ";
-  display: inline-block;
-  position: absolute;
-  top: 5px;
-  left: 4px;
-  width: 12px;
-  height: 7px;
-  border: 2px solid #fff;
-  border-top: 0;
-  border-right: 0;
-  -webkit-transform: rotate(-45deg);
-     -moz-transform: rotate(-45deg);
-      -ms-transform: rotate(-45deg);
-          transform: rotate(-45deg);
+.ibox input:checked+.box:after {
+    content: " ";
+    display: inline-block;
+    position: absolute;
+    top: 5px;
+    left: 4px;
+    width: 12px;
+    height: 7px;
+    border: 2px solid #fff;
+    border-top: 0;
+    border-right: 0;
+    -webkit-transform: rotate(-45deg);
+    -moz-transform: rotate(-45deg);
+    -ms-transform: rotate(-45deg);
+    transform: rotate(-45deg);
 }
 
-.ibox:hover input:disabled + .box:before {
-  border: 1px solid #ccc;
+.ibox:hover input:disabled+.box:before {
+    border: 1px solid #ccc;
 }
 
-.ibox:hover input:disabled:checked + .box:before {
-  border: 1px solid #0275d8;
+.ibox:hover input:disabled:checked+.box:before {
+    border: 1px solid #0275d8;
 }
 
-.readonly > .ibox,
-.readonly > .iswitch {
-  cursor: inherit;
+.readonly>.ibox,
+.readonly>.iswitch {
+    cursor: inherit;
 }
 
-.readonly > .ibox > .box,
-.readonly > .iswitch {
-  opacity: 0.6;
+.readonly>.ibox>.box,
+.readonly>.iswitch {
+    opacity: 0.6;
 }
 
 .form-item.iswitch {
-  margin-top: 4px;
+    margin-top: 4px;
 }
 
 .iswitch {
@@ -138,8 +139,8 @@
 }
 
 .iswitch.readonly {
-  cursor: default;
-  opacity: 0.6;
+    cursor: default;
+    opacity: 0.6;
 }
 
 .iswitch input {
@@ -148,7 +149,7 @@
     filter: alpha(opacity=0)
 }
 
-.iswitch input:checked + .box:before {
+.iswitch input:checked+.box:before {
     top: 50%;
     right: 5px;
     bottom: 50%;
@@ -157,7 +158,7 @@
     border-radius: 5px
 }
 
-.iswitch input:checked + .box:after {
+.iswitch input:checked+.box:after {
     margin-left: 16px
 }
 
@@ -174,8 +175,8 @@
     transition: all .2s
 }
 
-.iswitch input:focus + .box:before {
-  border: 1px solid #0275d8;
+.iswitch input:focus+.box:before {
+    border: 1px solid #0275d8;
 }
 
 .iswitch .box:after {
@@ -186,22 +187,22 @@
     width: 18px;
     background-color: #fff;
     border-radius: 50%;
-    box-shadow: 1px 1px 3px rgba(0,0,0,0.25);
+    box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.25);
     transition: margin-left .3s
 }
 
-.ng-invalid > .ibox .box:before,
-.ng-invalid > .iswitch .box:before {
-  border-color: #B94A48;
+.ng-invalid>.ibox .box:before,
+.ng-invalid>.iswitch .box:before {
+    border-color: #B94A48;
 }
 
-.form-item-container > .ibox,
-.form-item-container > .iswitch {
-  margin: 4px 0 !important;
-  float: left;
+.form-item-container>.ibox,
+.form-item-container>.iswitch {
+    margin: 4px 0 !important;
+    float: left;
 }
 
 .checkbox-inline .ibox .title {
-  width: calc(100% - 28px);
-  display: inline-block;
+    width: calc(100% - 28px);
+    display: inline-block;
 }

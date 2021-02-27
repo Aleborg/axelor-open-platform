@@ -17,718 +17,718 @@
  */
 (function() {
 
-/* jshint validthis: true */
+    /* jshint validthis: true */
 
-"use strict";
+    "use strict";
 
-var ui = angular.module('axelor.ui');
-var widgets = {};
-var registry = {};
-var metaWidgets = [];
+    var ui = angular.module('axelor.ui');
+    var widgets = {};
+    var registry = {};
+    var metaWidgets = [];
 
-/**
- * Perform common compile operations.
- *
- * example:
- *    ui.formCompile.call(this, element, attrs)
- */
-ui.formCompile = function(element, attrs, linkerFn) {
+    /**
+     * Perform common compile operations.
+     *
+     * example:
+     *    ui.formCompile.call(this, element, attrs)
+     */
+    ui.formCompile = function(element, attrs, linkerFn) {
 
-  var showTitle = attrs.showTitle || this.showTitle,
-    title = attrs.title || attrs.field;
+        var showTitle = attrs.showTitle || this.showTitle,
+            title = attrs.title || attrs.field;
 
-  attrs.$set('show-title', showTitle, true, 'x-show-title');
-  if (title) {
-    attrs.$set('title', title, true, 'x-title');
-  }
-  if (this.cellCss) {
-    attrs.$set('x-cell-css', this.cellCss);
-  }
-
-  function link(scope, element, attrs, controller) {
-
-    element.addClass(this.css).parent().addClass(this.cellCss);
-    element.data('$attrs', attrs); // store the attrs object for event handlers
-
-    var getViewDef = this.getViewDef || scope.getViewDef || function() { return {}; };
-
-    var field = getViewDef.call(scope, element);
-    var props = _.extend(_.pick(field, 'readonly,required,hidden,collapse,precision,scale,prompt,title,domain,css,icon,selection-in'.split(',')),
-               _.pick(field.widgetAttrs || {}, 'precision,scale,domain'.split(',')));
-
-    var state = _.clone(props);
-
-    function resetAttrs() {
-      var label = element.data('label');
-      state = _.clone(props);
-      state["force-edit"] = false;
-      if (label && state.title) {
-        var span = label.children('span[ui-help-popover]:first');
-        if (span.length === 0) {
-          span = label;
+        attrs.$set('show-title', showTitle, true, 'x-show-title');
+        if (title) {
+            attrs.$set('title', title, true, 'x-title');
         }
-        span.html(state.title);
-      }
-    }
-
-    if (field.css) {
-      element.addClass(field.css);
-    }
-    if (field.width && field.width !== '*' && !element.is('label')) {
-      element.width(field.width);
-    }
-    if (field.translatable) {
-      element.addClass("translatable");
-    }
-
-    scope.$events = {};
-    scope.field = field || {};
-
-    scope.$$readonly = undefined;
-
-    scope.attr = function(name) {
-      if (arguments.length > 1) {
-        var old = state[name];
-        state[name] = arguments[1];
-        if (name === "highlight") {
-          setHighlight(state.highlight);
+        if (this.cellCss) {
+            attrs.$set('x-cell-css', this.cellCss);
         }
-        if (old !== state[name]) {
-          scope.$broadcast("on:attrs-changed", {
-            name: name,
-            value: state[name]
-          });
-        }
-      }
-      var res = state[name];
-      if (res === undefined) {
-        res = field[name];
-      }
-      return res;
-    };
 
-    scope.$on("on:edit", function(e, rec) {
-      if (angular.equals(rec, {})) {
-        resetAttrs();
-      }
-      scope.$$readonly = scope.$$isReadonly();
-    });
+        function link(scope, element, attrs, controller) {
 
-    scope.$on("on:attrs-reset", function() {
-      resetAttrs();
-    });
+            element.addClass(this.css).parent().addClass(this.cellCss);
+            element.data('$attrs', attrs); // store the attrs object for event handlers
 
-    scope.$on("on:attrs-changed", function(event, attr) {
-      if (attr.name === "readonly" || attr.name === "force-edit") {
-        scope.$$readonly = scope.$$isReadonly();
-      }
-      if (attr.name === "readonly") {
-        element.attr("x-readonly", scope.$$readonly);
-      }
-    });
+            var getViewDef = this.getViewDef || scope.getViewDef || function() { return {}; };
 
-    scope.$watch("isEditable()", function isEditableWatch(editable, old) {
-      if (editable === undefined) return;
-      if (editable === old) return;
-      scope.$$readonly = scope.$$isReadonly();
-    });
+            var field = getViewDef.call(scope, element);
+            var props = _.extend(_.pick(field, 'readonly,required,hidden,collapse,precision,scale,prompt,title,domain,css,icon,selection-in'.split(',')),
+                _.pick(field.widgetAttrs || {}, 'precision,scale,domain'.split(',')));
 
-    // js expressions should be evaluated on dummy value changes
-    if (field.name && field.name[0] === '$') {
-      scope.$watch('record.' + field.name, function fieldValueWatch(a, b) {
-        if (a !== b) {
-          scope.$broadcastRecordChange();
-        }
-      });
-    }
+            var state = _.clone(props);
 
-    scope.isRequired = function() {
-      return this.attr("required") && this.text !== 0 && !this.text;
-    };
+            function resetAttrs() {
+                var label = element.data('label');
+                state = _.clone(props);
+                state["force-edit"] = false;
+                if (label && state.title) {
+                    var span = label.children('span[ui-help-popover]:first');
+                    if (span.length === 0) {
+                        span = label;
+                    }
+                    span.html(state.title);
+                }
+            }
 
-    scope.isReadonlyExclusive = function() {
-      var parent = this.$parent || {};
-      var readonly = this.attr("readonly");
+            if (field.css) {
+                element.addClass(field.css);
+            }
+            if (field.width && field.width !== '*' && !element.is('label')) {
+                element.width(field.width);
+            }
+            if (field.translatable) {
+                element.addClass("translatable");
+            }
 
-      if (scope._isPopup && !parent._isPopup) {
-        return readonly || false;
-      }
-      if (parent.isReadonlyExclusive && parent.isReadonlyExclusive()) {
-        return true;
-      }
-      if (readonly !== undefined) {
-        return readonly || false;
-      }
+            scope.$events = {};
+            scope.field = field || {};
 
-      return readonly || false;
-    };
+            scope.$$readonly = undefined;
 
-    scope.isReadonly = function() {
-      if (scope.$$readonly === undefined) {
-        scope.$$readonly = scope.$$isReadonly();
-      }
-      return scope.$$readonly;
-    };
-
-    scope.$$isReadonly = function() {
-      if ((this.hasPermission && !this.hasPermission('read')) || this.isReadonlyExclusive()) {
-        return true;
-      }
-      if (!this.attr("readonly") && this.attr("force-edit")) {
-        return false;
-      }
-      if (scope.isEditable && !scope.isEditable()) {
-        return true;
-      }
-      return this.attr("readonly") || false;
-    };
-
-    scope.isHidden = function() {
-      return this.attr("hidden") || (this.$parent && this.$parent.isHidden && this.$parent.isHidden()) || false;
-    };
-
-    scope.fireAction = function(name, success, error) {
-      var handler = this.$events[name];
-      if (handler) {
-        return handler().then(success, error);
-      }
-    };
-
-    if (angular.isFunction(this._link_internal)) {
-      this._link_internal.call(this, scope, element, attrs, controller);
-    }
-    if (angular.isFunction(this.init)) {
-      this.init.call(this, scope);
-    }
-    if (angular.isFunction(this.link)) {
-      this.link.call(this, scope, element, attrs, controller);
-    }
-
-    function hideWidget(hidden) {
-      var elem = element,
-        parent = elem.parent('td,.form-item'),
-        label = elem.data('label') || $(),
-        label_parent = label.parent('td,.form-item'),
-        isTable = parent.is('td');
-
-      // label scope should use same isHidden method (#1514)
-      var lScope = label.data('$scope');
-      if (lScope && lScope.isHidden !== scope.isHidden) {
-        lScope.isHidden = scope.isHidden;
-      }
-
-      elem = isTable && parent.length ? parent : elem;
-      label = isTable && label_parent.length ? label_parent : label;
-
-      if (!isTable) {
-        parent.toggleClass("form-item-hidden", hidden);
-      }
-
-      if (hidden) {
-        elem.add(label).hide();
-      } else {
-        elem.add(label).show().css('display', ''); //XXX: jquery may add display style
-      }
-
-      return axelor.$adjustSize();
-    }
-
-    var hideFn = _.contains(this.handles, 'isHidden') ? angular.noop : hideWidget;
-
-    // Ignore hiding of fields in editable grid
-    if (!scope.view || scope.view.type !== 'grid') {
-      var hiddenSet = false;
-      scope.$watch("isHidden()", function isHiddenWatch(hidden, old) {
-        if (hiddenSet && hidden === old) return;
-        hiddenSet = true;
-        return hideFn(hidden);
-      });
-    }
-
-    var readonlySet = false;
-    scope.$watch("isReadonly()", function isReadonlyWatch(readonly, old) {
-      if (readonlySet && readonly === old) return;
-      readonlySet = true;
-      element.toggleClass("readonly", readonly);
-      element.toggleClass("editable", !readonly);
-      if (scope.canEdit) {
-        element.toggleClass("no-edit", scope.canEdit() === false);
-      }
-    });
-
-    function setHighlight(args) {
-
-      function doHilite(params, passed) {
-        var label = element.data('label') || $();
-        element.toggleClass(params.css, passed);
-        label.toggleClass(params.css.replace(/(hilite-[^-]+\b(?!-))/g, ''), passed);
-      }
-
-      _.each(field.hilites, function(p) {
-        if (p.css) doHilite(p, false);
-      });
-
-      if (args && args.hilite && args.hilite.css) {
-        doHilite(args.hilite, args.passed);
-      }
-    }
-
-    this.prepare(scope, element, attrs, controller);
-
-    scope.$evalAsync(function() {
-      if (scope.isHidden()) {
-        hideFn(true);
-      }
-    });
-  }
-
-  return angular.bind(this, link);
-};
-
-ui.formDirective = function(name, object) {
-
-  if (object.compile === undefined) {
-    object.compile = angular.bind(object, function(element, attrs){
-      return ui.formCompile.apply(this, arguments);
-    });
-  }
-
-  if (object.restrict === undefined) {
-    object.restrict = 'EA';
-  }
-
-  if (object.template && !object.replace) {
-    object.replace = true;
-  }
-
-  if (object.cellCss === undefined) {
-    object.cellCss = 'form-item';
-  }
-
-  if (object.scope === undefined) {
-    object.scope = true;
-  }
-
-  if (object.require === undefined) {
-    object.require = '?ngModel';
-  }
-
-  function prepare_templates($compile) {
-
-    object.prepare = angular.bind(object, function(scope, element, attrs, model) {
-
-      var self = this;
-
-      if (!this.template_editable && !this.template_readonly && !scope.prepareTemplate) {
-        return;
-      }
-
-      scope.$elem_editable = null;
-      scope.$elem_readonly = null;
-
-      function showEditable() {
-        var template_editable = self.template_editable;
-        if (scope.field && scope.field.editor) {
-          template_editable = $('<div ui-panel-editor>');
-        }
-        if (_.isFunction(self.template_editable)) {
-          template_editable = self.template_editable(scope);
-        }
-        if (!template_editable) {
-          return false;
-        }
-        if (!scope.$elem_editable) {
-          scope.$elem_editable = $compile(template_editable)(scope);
-          if (self.link_editable) {
-            self.link_editable.call(self, scope, scope.$elem_editable, attrs, model);
-          }
-          if (scope.validate) {
-            model.$validators.valid = function(modelValue, viewValue) {
-              return !!scope.validate(viewValue);
+            scope.attr = function(name) {
+                if (arguments.length > 1) {
+                    var old = state[name];
+                    state[name] = arguments[1];
+                    if (name === "highlight") {
+                        setHighlight(state.highlight);
+                    }
+                    if (old !== state[name]) {
+                        scope.$broadcast("on:attrs-changed", {
+                            name: name,
+                            value: state[name]
+                        });
+                    }
+                }
+                var res = state[name];
+                if (res === undefined) {
+                    res = field[name];
+                }
+                return res;
             };
-          }
-          // focus the first input field
-          if (scope.$elem_editable.is('.input-append,.picker-input')) {
-            scope.$elem_editable.on('click', '.btn, i', function(){
-              if (!axelor.device.mobile) {
-                scope.$elem_editable.find('input:first').focus();
-              }
+
+            scope.$on("on:edit", function(e, rec) {
+                if (angular.equals(rec, {})) {
+                    resetAttrs();
+                }
+                scope.$$readonly = scope.$$isReadonly();
             });
-          }
 
-          if (scope.$elem_editable.is(':input')) {
-            scope.$elem_editable.attr('placeholder', scope.field.placeholder);
-          }
+            scope.$on("on:attrs-reset", function() {
+                resetAttrs();
+            });
 
-          if (scope.$elem_editable.is('.picker-input:not(.tag-select)')) {
-            scope.$elem_editable.find(':input:first').attr('placeholder', scope.field.placeholder);
-          }
-        }
-        if (scope.$elem_readonly) {
-          scope.$elem_readonly.detach();
-        }
-        element.append(scope.$elem_editable);
-        if (scope.$render_editable) scope.$render_editable();
-        return true;
-      }
+            scope.$on("on:attrs-changed", function(event, attr) {
+                if (attr.name === "readonly" || attr.name === "force-edit") {
+                    scope.$$readonly = scope.$$isReadonly();
+                }
+                if (attr.name === "readonly") {
+                    element.attr("x-readonly", scope.$$readonly);
+                }
+            });
 
-      function showReadonly() {
-        var field = scope.field || {};
-        var template_readonly = self.template_readonly;
-        if (field.viewer) {
-          template_readonly = field.viewer.template;
-          scope.$moment = function(d) { return moment(d); };
-          scope.$number = function(d) { return +d; };
-          scope.$image = function (fieldName, imageName) { return ui.formatters.$image(this, fieldName, imageName); };
-          scope.$fmt = function (fieldName, fieldValue) {
-            var args = [this, fieldName];
-            if (arguments.length > 1) {
-              args.push(fieldValue);
+            scope.$watch("isEditable()", function isEditableWatch(editable, old) {
+                if (editable === undefined) return;
+                if (editable === old) return;
+                scope.$$readonly = scope.$$isReadonly();
+            });
+
+            // js expressions should be evaluated on dummy value changes
+            if (field.name && field.name[0] === '$') {
+                scope.$watch('record.' + field.name, function fieldValueWatch(a, b) {
+                    if (a !== b) {
+                        scope.$broadcastRecordChange();
+                    }
+                });
             }
-            return ui.formatters.$fmt.apply(null, args);
-          };
-        } else if (field.editor && field.editor.viewer) {
-          return showEditable();
-        }
-        if (_.isFunction(self.template_readonly)) {
-          template_readonly = self.template_readonly(scope);
-        }
-        if (!template_readonly) {
-          return false;
-        }
-        if (_.isString(template_readonly)) {
-          template_readonly = axelor.sanitize(template_readonly.trim());
-          if (template_readonly[0] !== '<' || $(template_readonly).length > 1) {
-            template_readonly = '<span>' + template_readonly + '</span>';
-          }
-          if (field.viewer) {
-            template_readonly = template_readonly.replace(/^(\s*<\w+)/, '$1 ui-panel-viewer');
-          }
-        }
-        if (!scope.$elem_readonly) {
-          scope.$elem_readonly = $compile(template_readonly)(scope);
-          if (self.link_readonly) {
-            self.link_readonly.call(self, scope, scope.$elem_readonly, attrs, model);
-          }
-        }
-        if (scope.$elem_editable) {
-          scope.$elem_editable.detach();
-        }
-        element.append(scope.$elem_readonly);
-        return true;
-      }
 
-      scope.$watch("isReadonly()", function isReadonlyWatch(readonly) {
-        if (readonly && showReadonly()) {
-          return;
-        }
-        return showEditable();
-      });
-      scope.$watch("isRequired()", function isRequiredWatch(required, old) {
-        if (required === old) return;
-        var elem = element,
-          label = elem.data('label') || $();
-        if (label) {
-          label.toggleClass('required', required);
-        }
-        attrs.$set('required', required);
-      });
+            scope.isRequired = function() {
+                return this.attr("required") && this.text !== 0 && !this.text;
+            };
 
-      if (scope.field && scope.field.validIf) {
-        scope.$watch("attr('valid')", function attrValidWatch(valid) {
-          if (valid === undefined) return;
-          model.$setValidity('invalid', valid);
-        });
-      }
+            scope.isReadonlyExclusive = function() {
+                var parent = this.$parent || {};
+                var readonly = this.attr("readonly");
 
-      scope.$on('$destroy', function() {
-        if (scope.$elem_editable) {
-          scope.$elem_editable.remove();
-          scope.$elem_editable = null;
-        }
-        if (scope.$elem_readonly) {
-          scope.$elem_readonly.remove();
-          scope.$elem_readonly = null;
-        }
-      });
-    });
+                if (scope._isPopup && !parent._isPopup) {
+                    return readonly || false;
+                }
+                if (parent.isReadonlyExclusive && parent.isReadonlyExclusive()) {
+                    return true;
+                }
+                if (readonly !== undefined) {
+                    return readonly || false;
+                }
 
-    return object;
-  }
+                return readonly || false;
+            };
 
-  return ui.directive(name, ['$compile', function($compile) {
-    return prepare_templates($compile);
-  }]);
-};
+            scope.isReadonly = function() {
+                if (scope.$$readonly === undefined) {
+                    scope.$$readonly = scope.$$isReadonly();
+                }
+                return scope.$$readonly;
+            };
 
-var FormItem = {
+            scope.$$isReadonly = function() {
+                if ((this.hasPermission && !this.hasPermission('read')) || this.isReadonlyExclusive()) {
+                    return true;
+                }
+                if (!this.attr("readonly") && this.attr("force-edit")) {
+                    return false;
+                }
+                if (scope.isEditable && !scope.isEditable()) {
+                    return true;
+                }
+                return this.attr("readonly") || false;
+            };
 
-  css: 'form-item',
+            scope.isHidden = function() {
+                return this.attr("hidden") || (this.$parent && this.$parent.isHidden && this.$parent.isHidden()) || false;
+            };
 
-  cellCss: 'form-item'
-};
+            scope.fireAction = function(name, success, error) {
+                var handler = this.$events[name];
+                if (handler) {
+                    return handler().then(success, error);
+                }
+            };
 
-var FormInput = {
-
-  _link_internal: function(scope, element, attrs, model) {
-
-    scope.format = function(value) {
-      return value;
-    };
-
-    scope.parse = function(value) {
-      return value;
-    };
-
-    scope.validate = function(value) {
-      return true;
-    };
-
-    scope.setValue = function(value, fireOnChange) {
-
-      var val = this.parse(value);
-      var txt = this.format(value);
-      var onChange = this.$events.onChange;
-
-      model.$setViewValue(val);
-      this.text = txt;
-
-      model.$render();
-      if (onChange && fireOnChange) {
-        onChange();
-      }
-    };
-
-    scope.getValue = function() {
-      if (model) {
-        return model.$viewValue;
-      }
-      return null;
-    };
-
-    scope.getText = function() {
-      return this.text;
-    };
-
-    scope.initValue = function(value) {
-      this.text = this.format(value);
-    };
-
-    model.$render = function() {
-      scope.initValue(scope.getValue());
-      if (scope.$render_editable) {
-        scope.$render_editable();
-      }
-      if (scope.$render_readonly) {
-        scope.$render_readonly();
-      }
-    };
-
-    // Clear invalid fields (use $setPrestine of angular.js 1.1)
-    scope.$on('on:new', function(e, rec) {
-      if (!model.$valid && model.$viewValue) {
-        model.$viewValue = undefined;
-        model.$render();
-      }
-    });
-  },
-
-  link: function(scope, element, attrs, model) {
-
-  },
-
-  link_editable: function(scope, element, attrs, model) {
-
-    scope.$render_editable = function() {
-      var value = this.format(this.getValue());
-      element.val(value);
-    };
-
-    function bindListeners() {
-      var onChange = scope.$events.onChange || angular.noop,
-        onChangePending = false;
-
-      function listener() {
-        var value = _.str.trim(element.val()) || null;
-        if (value !== model.$viewValue) {
-          scope.$applyAsync(function() {
-            var val = scope.parse(value);
-            var txt = scope.format(value);
-            if (scope.$$setEditorValue && !scope.record) { // m2o editor with null value?
-              scope.$$setEditorValue({}, false);
+            if (angular.isFunction(this._link_internal)) {
+                this._link_internal.call(this, scope, element, attrs, controller);
             }
-            model.$setViewValue(val);
-            scope.text = txt;
-          });
-          onChangePending = true;
-        }
-      }
-
-      var field = scope.field || {};
-      if (!field.bind) {
-        element.bind('input', listener);
-      }
-
-      element.change(listener);
-
-      element.blur(function(e){
-        if (onChangePending) {
-          onChangePending = false;
-          setTimeout(onChange);
-        }
-      });
-
-      var oldValue = getInputValue();
-
-      // Default Enter key event handler
-      element.keydown(function(e) {
-        if (e.isDefaultPrevented()) {
-          return;
-        }
-        if (e.keyCode === $.ui.keyCode.ENTER) {
-          var value = getInputValue();
-          if (value !== oldValue) {
-            model.$setViewValue(value);
-            if (scope.validate(value)) {
-              scope.setValue(value, true);
-              scope.$applyAsync();
-              onChangePending = false;
+            if (angular.isFunction(this.init)) {
+                this.init.call(this, scope);
             }
-          }
-          oldValue = value;
+            if (angular.isFunction(this.link)) {
+                this.link.call(this, scope, element, attrs, controller);
+            }
+
+            function hideWidget(hidden) {
+                var elem = element,
+                    parent = elem.parent('td,.form-item'),
+                    label = elem.data('label') || $(),
+                    label_parent = label.parent('td,.form-item'),
+                    isTable = parent.is('td');
+
+                // label scope should use same isHidden method (#1514)
+                var lScope = label.data('$scope');
+                if (lScope && lScope.isHidden !== scope.isHidden) {
+                    lScope.isHidden = scope.isHidden;
+                }
+
+                elem = isTable && parent.length ? parent : elem;
+                label = isTable && label_parent.length ? label_parent : label;
+
+                if (!isTable) {
+                    parent.toggleClass("form-item-hidden", hidden);
+                }
+
+                if (hidden) {
+                    elem.add(label).hide();
+                } else {
+                    elem.add(label).show().css('display', ''); //XXX: jquery may add display style
+                }
+
+                return axelor.$adjustSize();
+            }
+
+            var hideFn = _.contains(this.handles, 'isHidden') ? angular.noop : hideWidget;
+
+            // Ignore hiding of fields in editable grid
+            if (!scope.view || scope.view.type !== 'grid') {
+                var hiddenSet = false;
+                scope.$watch("isHidden()", function isHiddenWatch(hidden, old) {
+                    if (hiddenSet && hidden === old) return;
+                    hiddenSet = true;
+                    return hideFn(hidden);
+                });
+            }
+
+            var readonlySet = false;
+            scope.$watch("isReadonly()", function isReadonlyWatch(readonly, old) {
+                if (readonlySet && readonly === old) return;
+                readonlySet = true;
+                element.toggleClass("readonly", readonly);
+                element.toggleClass("editable", !readonly);
+                if (scope.canEdit) {
+                    element.toggleClass("no-edit", scope.canEdit() === false);
+                }
+            });
+
+            function setHighlight(args) {
+
+                function doHilite(params, passed) {
+                    var label = element.data('label') || $();
+                    element.toggleClass(params.css, passed);
+                    label.toggleClass(params.css.replace(/(hilite-[^-]+\b(?!-))/g, ''), passed);
+                }
+
+                _.each(field.hilites, function(p) {
+                    if (p.css) doHilite(p, false);
+                });
+
+                if (args && args.hilite && args.hilite.css) {
+                    doHilite(args.hilite, args.passed);
+                }
+            }
+
+            this.prepare(scope, element, attrs, controller);
+
+            scope.$evalAsync(function() {
+                if (scope.isHidden()) {
+                    hideFn(true);
+                }
+            });
         }
-      });
 
-      function getInputValue() {
-        var childInput = element.find('input:first');
-        var valInput = childInput.length && childInput || element;
-        return valInput.val();
-      }
-    }
+        return angular.bind(this, link);
+    };
 
-    if (element.is(':input')) {
-      setTimeout(bindListeners);
-      // clear input value
-      if (scope.$$setEditorValue) {
-        scope.$on('on:edit', function () {
-          if (model.$viewValue && !scope.record) {
-            model.$setViewValue(undefined);
+    ui.formDirective = function(name, object) {
+
+        if (object.compile === undefined) {
+            object.compile = angular.bind(object, function(element, attrs) {
+                return ui.formCompile.apply(this, arguments);
+            });
+        }
+
+        if (object.restrict === undefined) {
+            object.restrict = 'EA';
+        }
+
+        if (object.template && !object.replace) {
+            object.replace = true;
+        }
+
+        if (object.cellCss === undefined) {
+            object.cellCss = 'form-item';
+        }
+
+        if (object.scope === undefined) {
+            object.scope = true;
+        }
+
+        if (object.require === undefined) {
+            object.require = '?ngModel';
+        }
+
+        function prepare_templates($compile) {
+
+            object.prepare = angular.bind(object, function(scope, element, attrs, model) {
+
+                var self = this;
+
+                if (!this.template_editable && !this.template_readonly && !scope.prepareTemplate) {
+                    return;
+                }
+
+                scope.$elem_editable = null;
+                scope.$elem_readonly = null;
+
+                function showEditable() {
+                    var template_editable = self.template_editable;
+                    if (scope.field && scope.field.editor) {
+                        template_editable = $('<div ui-panel-editor>');
+                    }
+                    if (_.isFunction(self.template_editable)) {
+                        template_editable = self.template_editable(scope);
+                    }
+                    if (!template_editable) {
+                        return false;
+                    }
+                    if (!scope.$elem_editable) {
+                        scope.$elem_editable = $compile(template_editable)(scope);
+                        if (self.link_editable) {
+                            self.link_editable.call(self, scope, scope.$elem_editable, attrs, model);
+                        }
+                        if (scope.validate) {
+                            model.$validators.valid = function(modelValue, viewValue) {
+                                return !!scope.validate(viewValue);
+                            };
+                        }
+                        // focus the first input field
+                        if (scope.$elem_editable.is('.input-group,.picker-input')) {
+                            scope.$elem_editable.on('click', '.btn, i', function() {
+                                if (!axelor.device.mobile) {
+                                    scope.$elem_editable.find('input:first').focus();
+                                }
+                            });
+                        }
+
+                        if (scope.$elem_editable.is(':input')) {
+                            scope.$elem_editable.attr('placeholder', scope.field.placeholder);
+                        }
+
+                        if (scope.$elem_editable.is('.picker-input:not(.tag-select)')) {
+                            scope.$elem_editable.find(':input:first').attr('placeholder', scope.field.placeholder);
+                        }
+                    }
+                    if (scope.$elem_readonly) {
+                        scope.$elem_readonly.detach();
+                    }
+                    element.append(scope.$elem_editable);
+                    if (scope.$render_editable) scope.$render_editable();
+                    return true;
+                }
+
+                function showReadonly() {
+                    var field = scope.field || {};
+                    var template_readonly = self.template_readonly;
+                    if (field.viewer) {
+                        template_readonly = field.viewer.template;
+                        scope.$moment = function(d) { return moment(d); };
+                        scope.$number = function(d) { return +d; };
+                        scope.$image = function(fieldName, imageName) { return ui.formatters.$image(this, fieldName, imageName); };
+                        scope.$fmt = function(fieldName, fieldValue) {
+                            var args = [this, fieldName];
+                            if (arguments.length > 1) {
+                                args.push(fieldValue);
+                            }
+                            return ui.formatters.$fmt.apply(null, args);
+                        };
+                    } else if (field.editor && field.editor.viewer) {
+                        return showEditable();
+                    }
+                    if (_.isFunction(self.template_readonly)) {
+                        template_readonly = self.template_readonly(scope);
+                    }
+                    if (!template_readonly) {
+                        return false;
+                    }
+                    if (_.isString(template_readonly)) {
+                        template_readonly = axelor.sanitize(template_readonly.trim());
+                        if (template_readonly[0] !== '<' || $(template_readonly).length > 1) {
+                            template_readonly = '<span>' + template_readonly + '</span>';
+                        }
+                        if (field.viewer) {
+                            template_readonly = template_readonly.replace(/^(\s*<\w+)/, '$1 ui-panel-viewer');
+                        }
+                    }
+                    if (!scope.$elem_readonly) {
+                        scope.$elem_readonly = $compile(template_readonly)(scope);
+                        if (self.link_readonly) {
+                            self.link_readonly.call(self, scope, scope.$elem_readonly, attrs, model);
+                        }
+                    }
+                    if (scope.$elem_editable) {
+                        scope.$elem_editable.detach();
+                    }
+                    element.append(scope.$elem_readonly);
+                    return true;
+                }
+
+                scope.$watch("isReadonly()", function isReadonlyWatch(readonly) {
+                    if (readonly && showReadonly()) {
+                        return;
+                    }
+                    return showEditable();
+                });
+                scope.$watch("isRequired()", function isRequiredWatch(required, old) {
+                    if (required === old) return;
+                    var elem = element,
+                        label = elem.data('label') || $();
+                    if (label) {
+                        label.toggleClass('required', required);
+                    }
+                    attrs.$set('required', required);
+                });
+
+                if (scope.field && scope.field.validIf) {
+                    scope.$watch("attr('valid')", function attrValidWatch(valid) {
+                        if (valid === undefined) return;
+                        model.$setValidity('invalid', valid);
+                    });
+                }
+
+                scope.$on('$destroy', function() {
+                    if (scope.$elem_editable) {
+                        scope.$elem_editable.remove();
+                        scope.$elem_editable = null;
+                    }
+                    if (scope.$elem_readonly) {
+                        scope.$elem_readonly.remove();
+                        scope.$elem_readonly = null;
+                    }
+                });
+            });
+
+            return object;
+        }
+
+        return ui.directive(name, ['$compile', function($compile) {
+            return prepare_templates($compile);
+        }]);
+    };
+
+    var FormItem = {
+
+        css: 'form-item',
+
+        cellCss: 'form-item'
+    };
+
+    var FormInput = {
+
+        _link_internal: function(scope, element, attrs, model) {
+
+            scope.format = function(value) {
+                return value;
+            };
+
+            scope.parse = function(value) {
+                return value;
+            };
+
+            scope.validate = function(value) {
+                return true;
+            };
+
+            scope.setValue = function(value, fireOnChange) {
+
+                var val = this.parse(value);
+                var txt = this.format(value);
+                var onChange = this.$events.onChange;
+
+                model.$setViewValue(val);
+                this.text = txt;
+
+                model.$render();
+                if (onChange && fireOnChange) {
+                    onChange();
+                }
+            };
+
+            scope.getValue = function() {
+                if (model) {
+                    return model.$viewValue;
+                }
+                return null;
+            };
+
+            scope.getText = function() {
+                return this.text;
+            };
+
+            scope.initValue = function(value) {
+                this.text = this.format(value);
+            };
+
+            model.$render = function() {
+                scope.initValue(scope.getValue());
+                if (scope.$render_editable) {
+                    scope.$render_editable();
+                }
+                if (scope.$render_readonly) {
+                    scope.$render_readonly();
+                }
+            };
+
+            // Clear invalid fields (use $setPrestine of angular.js 1.1)
+            scope.$on('on:new', function(e, rec) {
+                if (!model.$valid && model.$viewValue) {
+                    model.$viewValue = undefined;
+                    model.$render();
+                }
+            });
+        },
+
+        link: function(scope, element, attrs, model) {
+
+        },
+
+        link_editable: function(scope, element, attrs, model) {
+
+            scope.$render_editable = function() {
+                var value = this.format(this.getValue());
+                element.val(value);
+            };
+
+            function bindListeners() {
+                var onChange = scope.$events.onChange || angular.noop,
+                    onChangePending = false;
+
+                function listener() {
+                    var value = _.str.trim(element.val()) || null;
+                    if (value !== model.$viewValue) {
+                        scope.$applyAsync(function() {
+                            var val = scope.parse(value);
+                            var txt = scope.format(value);
+                            if (scope.$$setEditorValue && !scope.record) { // m2o editor with null value?
+                                scope.$$setEditorValue({}, false);
+                            }
+                            model.$setViewValue(val);
+                            scope.text = txt;
+                        });
+                        onChangePending = true;
+                    }
+                }
+
+                var field = scope.field || {};
+                if (!field.bind) {
+                    element.bind('input', listener);
+                }
+
+                element.change(listener);
+
+                element.blur(function(e) {
+                    if (onChangePending) {
+                        onChangePending = false;
+                        setTimeout(onChange);
+                    }
+                });
+
+                var oldValue = getInputValue();
+
+                // Default Enter key event handler
+                element.keydown(function(e) {
+                    if (e.isDefaultPrevented()) {
+                        return;
+                    }
+                    if (e.keyCode === $.ui.keyCode.ENTER) {
+                        var value = getInputValue();
+                        if (value !== oldValue) {
+                            model.$setViewValue(value);
+                            if (scope.validate(value)) {
+                                scope.setValue(value, true);
+                                scope.$applyAsync();
+                                onChangePending = false;
+                            }
+                        }
+                        oldValue = value;
+                    }
+                });
+
+                function getInputValue() {
+                    var childInput = element.find('input:first');
+                    var valInput = childInput.length && childInput || element;
+                    return valInput.val();
+                }
+            }
+
+            if (element.is(':input')) {
+                setTimeout(bindListeners);
+                // clear input value
+                if (scope.$$setEditorValue) {
+                    scope.$on('on:edit', function() {
+                        if (model.$viewValue && !scope.record) {
+                            model.$setViewValue(undefined);
+                            scope.$render_editable();
+                        }
+                    });
+                }
+            }
+
             scope.$render_editable();
-          }
-        });
-      }
-    }
+        },
 
-    scope.$render_editable();
-  },
+        link_readonly: function(scope, element, attrs, model) {
 
-  link_readonly: function(scope, element, attrs, model) {
+        },
 
-  },
+        template_editable: '<input type="text">',
 
-  template_editable: '<input type="text">',
+        template_readonly: '<span class="display-text">{{text}}</span>',
 
-  template_readonly: '<span class="display-text">{{text}}</span>',
-
-  template: '<span class="form-item-container"></span>'
-};
-
-function inherit(array) {
-
-  var args = _.chain(array).rest(1).flatten(true).value();
-  var last = _.last(args);
-  var base = null;
-  var obj = {};
-
-  _.chain(args).each(function(source, index) {
-    if (_.isString(source)) {
-      source = widgets[source];
-    }
-    if (index === args.length - 2) {
-      base = source;
-    }
-    _.extend(obj, source);
-  });
-
-  if (!base) {
-    return obj;
-  }
-
-  function overridden(name) {
-    return name !== "controller" &&
-      _.isFunction(last[name]) && !last[name].$inject &&
-      _.isFunction(base[name]);
-  }
-
-  function override(name, fn){
-    return function() {
-      var tmp = this._super;
-      this._super = base[name];
-      var ret = fn.apply(this, arguments);
-      this._super = tmp;
-      return ret;
+        template: '<span class="form-item-container"></span>'
     };
-  }
 
-  for(var name in last) {
-    if (overridden(name)) {
-      obj[name] = override(name, obj[name]);
+    function inherit(array) {
+
+        var args = _.chain(array).rest(1).flatten(true).value();
+        var last = _.last(args);
+        var base = null;
+        var obj = {};
+
+        _.chain(args).each(function(source, index) {
+            if (_.isString(source)) {
+                source = widgets[source];
+            }
+            if (index === args.length - 2) {
+                base = source;
+            }
+            _.extend(obj, source);
+        });
+
+        if (!base) {
+            return obj;
+        }
+
+        function overridden(name) {
+            return name !== "controller" &&
+                _.isFunction(last[name]) && !last[name].$inject &&
+                _.isFunction(base[name]);
+        }
+
+        function override(name, fn) {
+            return function() {
+                var tmp = this._super;
+                this._super = base[name];
+                var ret = fn.apply(this, arguments);
+                this._super = tmp;
+                return ret;
+            };
+        }
+
+        for (var name in last) {
+            if (overridden(name)) {
+                obj[name] = override(name, obj[name]);
+            }
+        }
+
+        return obj;
     }
-  }
 
-  return obj;
-}
+    ui.formWidget = function(name, object) {
+        var obj = inherit(arguments);
+        var widget = _.str.capitalize(name.replace(/^ui/, ''));
+        var directive = "ui" + widget;
 
-ui.formWidget = function(name, object) {
-  var obj = inherit(arguments);
-  var widget = _.str.capitalize(name.replace(/^ui/, ''));
-  var directive = "ui" + widget;
+        if (obj.metaWidget) {
+            metaWidgets.push(widget);
+        }
 
-  if (obj.metaWidget) {
-    metaWidgets.push(widget);
-  }
+        registry[directive] = directive;
+        _.each(obj.widgets, function(alias) {
+            registry[alias] = directive;
+        });
+        delete obj.widgets;
 
-  registry[directive] = directive;
-  _.each(obj.widgets, function(alias){
-    registry[alias] = directive;
-  });
-  delete obj.widgets;
+        widgets[widget] = _.clone(obj);
 
-  widgets[widget] = _.clone(obj);
+        ui.formDirective(directive, obj);
 
-  ui.formDirective(directive, obj);
+        return obj;
+    };
 
-  return obj;
-};
+    ui.formItem = function(name, object) {
+        return ui.formWidget(name, FormItem, _.rest(arguments, 1));
+    };
 
-ui.formItem = function(name, object) {
-  return ui.formWidget(name, FormItem, _.rest(arguments, 1));
-};
+    ui.formInput = function(name, object) {
+        return ui.formWidget(name, FormItem, FormInput, _.rest(arguments, 1));
+    };
 
-ui.formInput = function(name, object) {
-  return ui.formWidget(name, FormItem, FormInput, _.rest(arguments, 1));
-};
+    ui.getWidget = function(type) {
+        var name = type,
+            widget = registry["ui" + name] || registry[name];
+        if (!widget) {
+            name = _.str.classify(name);
+            widget = registry["ui" + name] || registry[name];
+        }
+        if (widget) {
+            widget = widget.replace(/^ui/, '');
+            return _.chain(widget).underscored().dasherize().value();
+        }
+        return null;
+    };
 
-ui.getWidget = function(type) {
-  var name = type,
-    widget = registry["ui" + name] || registry[name];
-  if (!widget) {
-    name = _.str.classify(name);
-    widget = registry["ui" + name] || registry[name];
-  }
-  if (widget) {
-    widget = widget.replace(/^ui/, '');
-    return _.chain(widget).underscored().dasherize().value();
-  }
-  return null;
-};
+    ui.getWidgetDef = function(name) {
+        return widgets[name];
+    };
 
-ui.getWidgetDef = function (name) {
-  return widgets[name];
-};
-
-ui.getMetaWidgets = function () {
-  return metaWidgets;
-};
+    ui.getMetaWidgets = function() {
+        return metaWidgets;
+    };
 
 })();

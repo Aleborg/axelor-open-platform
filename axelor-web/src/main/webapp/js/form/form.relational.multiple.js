@@ -730,7 +730,7 @@ ui.formInput('OneToMany', {
   "<div class='navbar'>" +
       "<div class='navbar-inner'>" +
           "<div class='container-fluid'>" +
-              "<span class='brand' href='' ui-help-popover ng-bind-html='title'></span>" +
+              "<span class='navbar-brand' href='' ui-help-popover ng-bind-html='title'></span>" +
           "<span class='icons-bar dropdown pull-right' ng-show='viewCanCopy() || viewCanExport()'>" +
           "<a href='' class='dropdown-toggle' data-toggle='dropdown'><i class='fa fa-caret-down'></i></a>" +
           "<ul class='dropdown-menu'>" +

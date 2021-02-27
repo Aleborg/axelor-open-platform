@@ -30,11 +30,11 @@
     <field name="description"/>
     <template><![CDATA[
     <div>
-      <div class="span4 card-image">
+      <div class="col-md-4 card-image">
         <img ng-src="{{$image(null, 'image')}}">
         <strong>{{name}}</strong>
       </div>
-      <div class="span8">
+      <div class="col-md-8">
         <strong>{{name}}</strong>
         <p class="muted">{{description}}</p>
         <div class="buttons">
